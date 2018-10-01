@@ -7,7 +7,7 @@
 # Load Default Config
 interval=10
 save=false
-. ./config.ini
+source config.ini
 while (( "$#" )); do
 	case "$1" in
 		-z|--zone)
