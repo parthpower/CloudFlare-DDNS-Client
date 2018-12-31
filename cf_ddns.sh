@@ -83,7 +83,7 @@ printf "[config] Zone:\t$zone
 
 # Main Code
 ###############
-endpoint="https://api.cloudflare.com/client/v4/zones/$zone/dns_records/";
+endpoint="https://api.cloudflare.com/client/v4/zones/$zone/dns_records";
 headers="-H Content-type:application/json -H X-Auth-Key:$key -H X-Auth-Email:$email";
 
 # Get Current IP Address and try to find records similar to it
@@ -141,7 +141,7 @@ while [[ true ]]; do
 	if [[ $id = 'null' ]] ; then
 		# Create Record
 		echo "[$(date)] INFO: Creating New Record"
-		content=$(curl -s -X POST $headers $endpoint -d "{\"type\":\"A\",\"name\":\"$a_name\",\"content\":\"$ip\",\"proxied\":false}");
+		content=$(curl -s -X POST $headers $endpoint/$id -d "{\"type\":\"A\",\"name\":\"$a_name\",\"content\":\"$ip\",\"proxied\":false}");
 	else
 		echo "[$(date)] INFO: Updating Record"
 		content=$(curl -s -X PUT $headers $endpoint -d "{\"type\":\"A\",\"name\":\"$a_name\",\"content\":\"$ip\",\"proxied\":false}");
