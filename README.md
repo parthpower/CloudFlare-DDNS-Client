@@ -59,6 +59,8 @@ I have no idea but it should work.
 
 ## Notes
 
+- To save number of API calls this script updates the `A` record only when the host IP changes. It does not periodically check if the record is modified by other means. You can use `--always-update-dns` to update the record entry at the interval.
+
 - What is DNS record? https://www.cloudflare.com/learning/dns/dns-records/ (Psst: We are just messing with `A` record here)
 
 - Works on CloudFlare API `v4`
