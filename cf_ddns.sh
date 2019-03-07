@@ -92,7 +92,6 @@ printf "[config] Zone:\t$zone
 ###############
 endpoint="https://api.cloudflare.com/client/v4/zones/$zone/dns_records";
 headers="-H Content-type:application/json -H X-Auth-Key:$key -H X-Auth-Email:$email";
-a_name=$(echo $name|cut -d'.' -f1)
 id="null";
 last_ip="null";
 
@@ -120,32 +119,21 @@ while [[ true ]]; do
 		fi
 	fi
 
-	# Check if DNS Record Exist
-	echo "[$(date)] INFO: Checking for existing DNS Record.";
-	content=$(curl -s -X GET $headers $endpoint\?\&name=$name||echo 'null');
-	id=$(echo $content|jq -r '.result[0].id');
-	ip_on_record=$(echo $content|jq -r '.result[0].content');
-	echo "[$(date)] INFO: DNS Record ID:$id";
-	echo "[$(date)] INFO: IP on DNS Record $ip_on_record";
+	for cur_name in $(echo $name | tr ";" "\n")
+	do
+		a_name=$(echo $cur_name|cut -d'.' -f1)
+		# Check if DNS Record Exist
+		echo "[$(date)] INFO: Checking for existing DNS Record $cur_name.";
+		content=$(curl -s -X GET $headers $endpoint\?\&name=$cur_name||echo 'null');
+		id=$(echo $content|jq -r '.result[0].id');
+		ip_on_record=$(echo $content|jq -r '.result[0].content');
+		echo "[$(date)] INFO: DNS Record ID:$id";
+		echo "[$(date)] INFO: IP on DNS Record $ip_on_record";
 
-	if [[ $id = 'null' ]] ; then
-		# Create Record
-		echo "[$(date)] INFO: Creating New Record"
-		content=$(curl -s -X POST $headers $endpoint -d "{\"type\":\"A\",\"name\":\"$a_name\",\"content\":\"$current_ip\",\"proxied\":false}");
-		id=$(echo $content|jq -r '.result.id');
-		
-		echo "[$(date)] INFO: $content";
-		echo "[$(date)] INFO: Record ID:$id";
-		
-		if [[ $(echo $content | jq -r '.success') != 'true' ]]; then
-			echo "[$(date)] ERROR: Failed with errors $(echo $content | jq -r '.errors')";
-			continue;
-		fi
-	else
-		if [[ $ip_on_record != $current_ip ]]; then
-			# Update Existing DNS Record
-			echo "[$(date)] INFO: Updating Existing Record ID: $id";
-			content=$(curl -s -X PUT $headers $endpoint/$id -d "{\"type\":\"A\",\"name\":\"$a_name\",\"content\":\"$current_ip\",\"proxied\":false}");
+		if [[ $id = 'null' ]] ; then
+			# Create Record
+			echo "[$(date)] INFO: Creating New Record"
+			content=$(curl -s -X POST $headers $endpoint -d "{\"type\":\"A\",\"name\":\"$a_name\",\"content\":\"$current_ip\",\"proxied\":false}");
 			id=$(echo $content|jq -r '.result.id');
 			
 			echo "[$(date)] INFO: $content";
@@ -155,11 +143,26 @@ while [[ true ]]; do
 				echo "[$(date)] ERROR: Failed with errors $(echo $content | jq -r '.errors')";
 				continue;
 			fi
-
 		else
-			echo "[$(date)] INFO: Not updating A record because IP on record is same as host ip.";
+			if [[ $ip_on_record != $current_ip ]]; then
+				# Update Existing DNS Record
+				echo "[$(date)] INFO: Updating Existing Record ID: $id";
+				content=$(curl -s -X PUT $headers $endpoint/$id -d "{\"type\":\"A\",\"name\":\"$a_name\",\"content\":\"$current_ip\",\"proxied\":false}");
+				id=$(echo $content|jq -r '.result.id');
+				
+				echo "[$(date)] INFO: $content";
+				echo "[$(date)] INFO: Record ID:$id";
+				
+				if [[ $(echo $content | jq -r '.success') != 'true' ]]; then
+					echo "[$(date)] ERROR: Failed with errors $(echo $content | jq -r '.errors')";
+					continue;
+				fi
+
+			else
+				echo "[$(date)] INFO: Not updating A record because IP on record is same as host ip.";
+			fi
 		fi
-	fi
+        done
 
 	sleep $interval
 done
