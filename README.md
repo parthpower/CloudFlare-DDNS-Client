@@ -40,7 +40,7 @@ I have no idea but it should work.
 
 2. First Run:
 
-   `./cf_ddns.sh --key <api key> --zone <zone id> --email <your email> --interval 60 --config config.ini --save test.example.com | tee log.txt`
+   `./cf_ddns.sh --key <api key> --zone <zone id> --email <your email> --interval 60 --config config.ini --save test.example.com test2.example.com | tee log.txt`
 
 3. Once you have the config file, just `./cf_ddns.sh`
 
