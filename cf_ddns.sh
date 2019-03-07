@@ -6,9 +6,9 @@
 
 # Load Default Config
 interval=10
-save=false
+save=''
 always_update_dns=false
-. ./config.ini
+source ./config.ini > /dev/null 2>&1 || true
 while (( "$#" )); do
 	case "$1" in
 		-z|--zone)
@@ -47,12 +47,12 @@ while (( "$#" )); do
 			[-s|--save]
 			[--always-update-dns]
 			[-i|--interval <update interval in seconds>]
-			[sub.primary.com]
+			[sub.primary.com] [sub2.primary.com] [sub3.primary.com]
 	
 	Use --alway-update-dns will match DNS record with the machine IP at every interval. Not recommended for free tier DNS.
 Example:
 To host current ip at test.example.com
-./cf_ddns.sh --key <api key> --zone <zone id> --email <your email> --interval 60 --config config.ini --save test.example.com
+./cf_ddns.sh --key <api key> --zone <zone id> --email <your email> --interval 60 --config config.ini --save test.example.com test2.example.com
 			"
 			exit 0
 			;;
@@ -61,7 +61,7 @@ To host current ip at test.example.com
 			break 
 			;;
 		*)
-			name=$1
+			name=$*
 			shift
 			break
 			;;
@@ -75,7 +75,7 @@ if [[ $config_file ]]; then
 		echo "zone=$zone;" 	>  $config_file;
 		echo "key=$key;" 	>> $config_file;
 		echo "email=$email;" >> $config_file;
-		echo "name=$name;" >> $config_file;
+		echo "name='$name';" >> $config_file;
         echo "interval=$interval;" >> $config_file;
 	else
 		. $config_file
@@ -119,7 +119,7 @@ while [[ true ]]; do
 		fi
 	fi
 
-	for cur_name in $(echo $name | tr ";" "\n")
+	for cur_name in $name
 	do
 		a_name=$(echo $cur_name|cut -d'.' -f1)
 		# Check if DNS Record Exist
